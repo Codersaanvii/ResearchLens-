@@ -1,16 +1,22 @@
 import streamlit as st
-import requests #sends http req to fastapi backend
+
+from src.rag import build_db, get_answer
 
 st.title("Ask PDF")
-question = st.text_input("ask a question")
+uploaded_file = st.file_uploader(
+    "Upload a PDF",
+    type="pdf"
+)
 
-if st.button("ask"):
-    if question:
-        with st.spinner("thinking..."):
-            response = requests.post(
-                "http://127.0.0.1:8000/ask",
-                json = {"text":question}
-            )
+if uploaded_file:
+    st.session_state.db = build_db(uploaded_file)
+    question = st.text_input("ask a question")
 
+    if st.button("ask"):
+        if "db" not in st.session_state:
+                st.error("please upload a PDF")
+        else:
+            answer = get_answer(question,
+                                st.session_state.db)
 #Extracts only the answer value
-            st.write(response.json()["answer"])
+            st.write("answer:",answer)
